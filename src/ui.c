@@ -469,6 +469,18 @@ void PositionMainControls(HWND hDlg)
 		SetWindowPos(hCtrl, hPrevCtrl, rc.left, rc.top, fw, rc.bottom - rc.top, 0);
 	}
 
+	//add support for chromeos images
+	if (IS_CHROMEOS(img_report)) {
+		// Resize the full width controls
+		for (i = 0; i < ARRAYSIZE(full_width_controls_chromeos); i++) {
+			hCtrl = GetDlgItem(hDlg, full_width_controls_chromeos[i]);
+			GetWindowRect(hCtrl, &rc);
+			MapWindowPoints(NULL, hDlg, (POINT*)&rc, 2);
+			hPrevCtrl = GetNextWindow(hCtrl, GW_HWNDPREV);
+			SetWindowPos(hCtrl, hPrevCtrl, rc.left, rc.top, fw, rc.bottom - rc.top, 0);
+		}
+	}
+
 	// Resize the half drowpdowns
 	for (i = 0; i < ARRAYSIZE(half_width_ids); i++) {
 		hCtrl = GetDlgItem(hDlg, half_width_ids[i]);
@@ -1235,6 +1247,24 @@ void InitProgress(BOOL bOnlyFormat)
 	if (slots_analog == 0.0f) {
 		for (i = 0; i < OP_MAX; i++) {
 			slot_end[i + 1] *= 100.0f / slots_discrete;
+		}
+	}
+}
+
+//if boot method is not bootable as defined, then we search in the image for a bootable partition
+//and set the boot method to the one found
+static void SetBootType(void)
+{
+	int i;
+	BOOL r;
+	boot_type = BT_NON_BOOTABLE;
+	if (selection_default == BT_IMAGE) {
+		for (i = 0; i < 4; i++) {
+			r = GetPartitionBootableStatus(i);
+			if (r) {
+				boot_type = BT_IMAGE;
+				break;
+			}
 		}
 	}
 }
